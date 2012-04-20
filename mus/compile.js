@@ -3,6 +3,10 @@
 
 // Calculates the end time of a expression 'expr', given the initial time
 // 'time' of that expression.
+//
+// This function will be used on the 'compile' function, to calculate the time
+// offset that the right section of an 'seq' expression will have, in relation
+// to the left section.
 var endTime = function (time, expr) {
     var exprTime = function(expr) {
         switch(expr.tag) {
@@ -40,6 +44,9 @@ var convertPitch = function(pitch) {
 }
 
 // Generates a MUS tree where the expression 'expr' is repeated 'count' times.
+//
+// This function will be used to "unfold" 'repeat' expressions, at the
+// 'compile' function.
 var repeatExpression = function(expr, count) {
     if(count == 0) {
         // behaving well with extreme cases...
