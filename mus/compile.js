@@ -71,6 +71,7 @@ var compile = function(musexpr, initial_time) {
     initial_time = typeof initial_time !== 'undefined' ? initial_time : 0;
     var build = [];
 
+    // Recursively traverses a MUS AST, adding notes to the 'build' array.
     var traverse = function(expr, time) {
         switch(expr.tag) {
             case 'note':
