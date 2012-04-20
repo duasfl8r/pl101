@@ -1,9 +1,8 @@
 // MUS Abstract Syntax Tree compiler
 // Lucas Teixeira, 2012-04-20
 
-/* Calculates the end time of a expression 'expr', given the initial time
- * 'time' of that expression.
- */
+// Calculates the end time of a expression 'expr', given the initial time
+// 'time' of that expression.
 var endTime = function (time, expr) {
     var exprTime = function(expr) {
         switch(expr.tag) {
@@ -22,26 +21,29 @@ var endTime = function (time, expr) {
     return time + exprTime(expr);
 };
 
-
-var pitchLetter = {
-    c: 0,
-    d: 2,
-    e: 4,
-    f: 5,
-    g: 7,
-    a: 9,
-    b: 11
-};
-
+// Converts "letter-octave" pitches (e.g. "a4") to number pitches (e.g. 60).
 var convertPitch = function(pitch) {
-    var letter = pitch[0];
+    var pitchLetter = {
+        c: 0,
+        d: 2,
+        e: 4,
+        f: 5,
+        g: 7,
+        a: 9,
+        b: 11
+    };
+
+    var letter = pitch[0].toLowerCase();
     var octave = pitch[1];
+
     return 12 + (12 * octave) + pitchLetter[letter];
 }
 
+// Generates a MUS tree where the expression 'expr' is repeated 'count' times.
 var repeatExpression = function(expr, count) {
-    if(count < 1 || typeof count !== 'number') {
-        return undefined;
+    if(count == 0) {
+        // behaving well with extreme cases...
+        return { tag: 'rest', dur: 0 }
     } else if(count == 1) {
         return expr;
     } else {
@@ -50,15 +52,14 @@ var repeatExpression = function(expr, count) {
             left: expr,
             right: repeatExpression(expr, count - 1)
         };
-    }
+    } 
 }
 
 
-/* Compiles 'musexpr', which is a Abstract Syntax Tree for the MUS language,
- * into a NOTE program.
- *
- * Supports 'note', 'seq' and 'par' expressions.
- */
+// Compiles 'musexpr', which is a Abstract Syntax Tree for the MUS language,
+// into a NOTE program.
+//
+// Supports 'note', 'seq', 'par', 'rest' and 'repeat'  expressions.
 var compile = function(musexpr, initial_time) {
     initial_time = typeof initial_time !== 'undefined' ? initial_time : 0;
     var build = [];
