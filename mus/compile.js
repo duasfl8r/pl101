@@ -7,6 +7,7 @@
 var endTime = function (time, expr) {
     var exprTime = function(expr) {
         switch(expr.tag) {
+            case 'rest':
             case 'note':
                 return expr.dur;
             case 'seq':
