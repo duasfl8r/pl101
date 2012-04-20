@@ -14,6 +14,8 @@ var endTime = function (time, expr) {
                 return exprTime(expr.left) + exprTime(expr.right);
             case 'par':
                 return Math.max(exprTime(expr.left), exprTime(expr.right));
+            case 'repeat':
+                return exprTime(expr.section) * expr.count;
 	}
     };
 
@@ -37,13 +39,28 @@ var convertPitch = function(pitch) {
     return 12 + (12 * octave) + pitchLetter[letter];
 }
 
+var repeatExpression = function(expr, count) {
+    if(count < 1 || typeof count !== 'number') {
+        return undefined;
+    } else if(count == 1) {
+        return expr;
+    } else {
+        return {
+            tag: 'seq',
+            left: expr,
+            right: repeatExpression(expr, count - 1)
+        };
+    }
+}
+
 
 /* Compiles 'musexpr', which is a Abstract Syntax Tree for the MUS language,
  * into a NOTE program.
  *
  * Supports 'note', 'seq' and 'par' expressions.
  */
-var compile = function(musexpr) {
+var compile = function(musexpr, initial_time) {
+    initial_time = typeof initial_time !== 'undefined' ? initial_time : 0;
     var build = [];
 
     var run_tree = function(expr, time) {
@@ -64,10 +81,14 @@ var compile = function(musexpr) {
                 run_tree(expr.left, time);
                 run_tree(expr.right, time);
                 break;
+            case 'repeat':
+                sequence = repeatExpression(expr.section, expr.count);
+                build = build.concat(compile(sequence, time));
+                break;
         }
     };
     
-    run_tree(musexpr, 0);
+    run_tree(musexpr, initial_time);
     return build;
 };
 
