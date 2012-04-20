@@ -12,11 +12,30 @@ var endTime = function (time, expr) {
                 return expr.dur;
             case 'seq':
                 return exprTime(expr.left) + exprTime(expr.right);
-            case 'par': return Math.max(exprTime(expr.left), exprTime(expr.right)); }
+            case 'par':
+                return Math.max(exprTime(expr.left), exprTime(expr.right));
+	}
     };
 
     return time + exprTime(expr);
 };
+
+
+var pitchLetter = {
+    c: 0,
+    d: 2,
+    e: 4,
+    f: 5,
+    g: 7,
+    a: 9,
+    b: 11
+};
+
+var convertPitch = function(pitch) {
+    var letter = pitch[0];
+    var octave = pitch[1];
+    return 12 + (12 * octave) + pitchLetter[letter];
+}
 
 
 /* Compiles 'musexpr', which is a Abstract Syntax Tree for the MUS language,
