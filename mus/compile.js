@@ -70,3 +70,5 @@ var compile = function(musexpr) {
     run_tree(musexpr, 0);
     return build;
 };
+
+exports.compile = compile;
