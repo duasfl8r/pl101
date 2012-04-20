@@ -51,7 +51,7 @@ var compile = function(musexpr) {
             case 'note':
                 build.push({ 
                     tag: 'note',
-                    pitch: expr.pitch,
+                    pitch: convertPitch(expr.pitch),
                     start: time,
                     dur: expr.dur
                 });
