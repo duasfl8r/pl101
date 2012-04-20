@@ -71,7 +71,7 @@ var compile = function(musexpr, initial_time) {
     initial_time = typeof initial_time !== 'undefined' ? initial_time : 0;
     var build = [];
 
-    var traverse_tree = function(expr, time) {
+    var traverse = function(expr, time) {
         switch(expr.tag) {
             case 'note':
                 build.push({ 
@@ -82,12 +82,12 @@ var compile = function(musexpr, initial_time) {
                 });
                 break;
             case 'seq':
-                traverse_tree(expr.left, time);
-                traverse_tree(expr.right, endTime(time, expr.left));
+                traverse(expr.left, time);
+                traverse(expr.right, endTime(time, expr.left));
                 break;
             case 'par':
-                traverse_tree(expr.left, time);
-                traverse_tree(expr.right, time);
+                traverse(expr.left, time);
+                traverse(expr.right, time);
                 break;
             case 'repeat':
                 sequence = repeatExpression(expr.section, expr.count);
@@ -96,7 +96,7 @@ var compile = function(musexpr, initial_time) {
         }
     };
     
-    traverse_tree(musexpr, initial_time);
+    traverse(musexpr, initial_time);
     return build;
 };
 
