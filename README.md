@@ -1,4 +1,4 @@
-pl101
+PL101
 =====
 
-Nathan University Programming Language 101 class
+Programming Language 101 class
