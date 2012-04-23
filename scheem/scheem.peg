@@ -6,6 +6,8 @@ expression =
         { return atom; }
   / space* "(" space* atom:atom args:arg* space* ")" space*
         { return [atom].concat(args); }
+  / space* "'(" space* atom:atom args:arg* space* ")" space*
+        { return ["quote", [atom].concat(args)]; }
 
 arg =
     space* e:expression
