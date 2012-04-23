@@ -2,16 +2,19 @@ start =
     expression
 
 expression =
-    atom
-  / "(" atom:atom args:arg* ")"
+    space* atom:atom space*
+        { return atom; }
+  / space* "(" space* atom:atom args:arg* space* ")" space*
         { return [atom].concat(args); }
 
 arg =
-    " " e:expression
+    space* e:expression
         { return e; }
 
 space =
     " "
+  / "\t"
+  / "\n"
 
 validchar =
     [0-9a-zA-Z_?!+-=@#$%^&*/.]
