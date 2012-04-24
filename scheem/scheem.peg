@@ -1,5 +1,15 @@
 start =
-    expression
+    program
+
+program =
+    commentNL* e:expression commentNL* comment?
+        { return e; }
+
+comment =
+    ";;" [^\n]*
+
+commentNL =
+    comment "\n"+
 
 expression =
     space* atom:atom space*
