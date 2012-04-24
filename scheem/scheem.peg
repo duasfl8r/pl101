@@ -14,8 +14,10 @@ commentNL =
 expression =
     space* atom:atom space*
         { return atom; }
+
   / space* "(" space* atom:atom args:arg* space* ")" space*
         { return [atom].concat(args); }
+
   / space* "'(" space* atom:atom args:arg* space* ")" space*
         { return ["quote", [atom].concat(args)]; }
 
@@ -23,10 +25,7 @@ arg =
     space* e:expression
         { return e; }
 
-space =
-    " "
-  / "\t"
-  / "\n"
+space = [ \t\n]
 
 validchar =
     [0-9a-zA-Z_?!+-=@#$%^&*/.]
