@@ -1,0 +1,91 @@
+{
+    var default_duration = 100;
+
+    function Program() {
+        this.modes = [{
+            mode: 'root',
+            children: []
+        }];
+    }
+
+    Program.prototype.add = function(node) {
+        var mode = this.modes[this.modes.length-1];
+        mode.children.push(node);
+    }
+
+    Program.prototype.indent = function(mode) {
+        this.modes.push({ mode: mode, children: [] });
+    }
+
+    Program.prototype.dedent = function() {
+        this.modes.pop();
+    }
+
+    program = new Program();
+}
+
+start =
+    line*
+    {
+        return program.modes;
+    }
+
+line =
+    indent:"\t"*
+    expr:expression
+    ( [\r\n] / "\r\n" )
+    {
+        return expr;
+    }
+
+expression =
+    note
+  / rest
+  / repeat
+
+note =
+    p:pitch d:(" " duration)?
+        {
+            if(d === "") {
+                d = default_duration;
+            }
+
+            program.add({ tag: 'note', pitch: p, dur: d[1] });
+        }
+
+rest =
+    "--" d:(" " duration)?
+        {
+            if(d === "") {
+                d = default_duration;
+            }
+
+            program.add({ tag: 'rest', dur: d[1] });
+        }
+        
+repeat =
+    times:([0-9]+) "*"
+        {
+            program.indent({
+                tag: 'repeat',
+                count: parseInt(times.join(''))
+            });
+        }
+
+pitch =
+    letter:[a-zA-Z] octave:[0-9]
+        { return letter + octave; }
+
+duration =
+    miliseconds:([0-9]+)
+        { return parseInt(miliseconds.join("")); }
+  / operand:[/x] num:([0-9]+)
+        {
+            if(operand == "/") {
+                return default_duration / parseInt(num);
+            } else {
+                return default_duration * parseInt(num);
+            }
+        }
+
+
