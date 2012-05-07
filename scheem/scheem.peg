@@ -25,11 +25,17 @@ arg =
     space* e:expression
         { return e; }
 
-space = [ \t\n]
+space =
+    [ \t\n]
 
 validchar =
     [0-9a-zA-Z_?!+-=@#$%^&*/.]
 
 atom =
     chars:validchar+
-        { return chars.join(""); }
+        {
+            var str = chars.join("");
+            var int = parseInt(str);
+            
+            return isNaN(int) ? str : int;
+        }
