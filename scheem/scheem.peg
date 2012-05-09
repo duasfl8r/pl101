@@ -1,0 +1,41 @@
+start =
+    program
+
+program =
+    commentNL* e:expression commentNL* comment?
+        { return e; }
+
+comment =
+    ";;" [^\n]*
+
+commentNL =
+    comment "\n"+
+
+expression =
+    space* atom:atom space*
+        { return atom; }
+
+  / space* "(" space* atom:atom args:arg* space* ")" space*
+        { return [atom].concat(args); }
+
+  / space* "'(" space* atom:atom args:arg* space* ")" space*
+        { return ["quote", [atom].concat(args)]; }
+
+arg =
+    space* e:expression
+        { return e; }
+
+space =
+    [ \t\n]
+
+validchar =
+    [0-9a-zA-Z_?!+-=@#$%^&*/.]
+
+atom =
+    chars:validchar+
+        {
+            var str = chars.join("");
+            var int = parseFloat(str);
+            
+            return isNaN(int) ? str : int;
+        }

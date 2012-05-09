@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>(try 'scheem)</title>
+  <script src= "http://nathansuniversity.com/js/jquery-1.7.1.min.js"> </script>
+  <script src="../lib/underscore-min.js"></script>
+  <script src="eval.js"></script>
+  <script src="parser.js"></script>
+  <link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css">
+  
+</head>
+<body>
+
+<div class="container">
+<div class="row">
+<div class="span16">
+    <h1 style="font-size: 3em; text-align: center; font-variant: small-caps; margin: 10px auto">(try 'scheem)</h1>
+
+    <form action="#" class="form-vertical">
+        <textarea id="input" style="width:800px; height:300px; display: block; margin: 10px auto;">;; sums two numbers
+    (begin
+        (define x 10)   ;; defining x value
+        (define y 20)   ;; defining y value
+        (+ x y))</textarea>
+
+        <button  style="display: block; margin: 10px auto;" id="submitbutton" class="btn btn-inverse btn-large" type="submit"><i class="icon-play icon-white"></i> Run</button>
+
+        <pre id="console" class="console" style="width: 800px; padding: 5px; display: block; margin: 10px auto;">Output</pre>
+    </form>
+
+    <script>
+      // Utility function to log messages
+      var log_console = function(msg) {
+          $('#console').append('<p>' + msg + '</p>');
+      };
+      // After page load
+      $(function() {
+        $('#submitbutton').click(function() {
+            var user_text = $('#input').val();
+            $('#console').html(''); // clear console
+            try {
+                var parsed = SCHEEM.parse(user_text);
+                log_console('Parsed: ' + JSON.stringify(parsed));
+                try {
+                    var result = evalScheem(parsed, {});
+                    log_console('<strong>Result: ' + JSON.stringify(result) + '</strong>');
+                }
+                catch(e) {
+                    log_console('Eval Error: ' + e);
+                }
+            }
+            catch(e) {
+                log_console('Parse Error: ' + e);
+            }
+        });
+      });
+    </script>
+
+    <h2 id="about-scheem">About Scheem</h2>
+    <p>Scheem is a language that smells a lot like Scheme.</p>
+    <p>A program is one (and only one) s-expression:</p>
+    <pre>;; sums two numbers
+    (begin
+        (define x 10)   ;; defining x value
+        (define y 20)   ;; defining y value
+        (+ x y))</pre>
+    <p>A comment starts with <code>;;</code> and goes until the end of the line.</p>
+    <h3 id="supported-features">Supported features</h3>
+    <p><strong>Literals</strong>: number (<code>192</code>, <code>1</code>, -<code>10</code>, <code>1000.4</code>); boolean (<code>#f</code> is false, anything else -- including <code>#t</code> -- is true).</p>
+    <p><strong>Arithmetics</strong>: <code>(+ 1 2 3 4)</code>, <code>(- 15 5)</code>, <code>(* 2 5)</code>, <code>(/ 40 2 2)</code> all give the same <strong>result</strong>: <code>10</code>.</p>
+    <p><strong>Variables</strong>: <code>(define x 10)</code> defines <code>x</code> as <code>10</code> for the first time; <code>(set! x 15)</code> sets <code>x</code> to <code>15</code> after it was defined.</p>
+    <p><strong>Blocks</strong>: although a Scheem program contains only one s-expression, you can nest multiple sub-expressions inside a <code>begin</code>. They will be executed sequentially, and will return whatever the last executed expression returns.</p>
+    <p><strong>Quoting</strong>: when you quote a s-expression, its contents are not evaluated; it is returned as data. Thus, <code>(quote (+ 2 3))</code> returns the list <code>(+ 2 3)</code>, not <code>5</code>. You can abbreviate <code>quote</code> to a single quote: <code>'(1 2 3)</code></p>
+    <p><strong>Comparisons</strong>: Scheem currently supports <code>&lt;</code> and <code>=</code> as comparisons between numbers.</p>
+    <p><strong>Lists</strong>: <code>(cons head tail)</code> puts <code>head</code> in the beginning of <code>tail</code> (which must be a list). <code>(car list)</code> returns the first element of <code>list</code>, while <code>(cdr list)</code> returns <em>all but</em> the first element of <code>list</code>.</p>
+    <p><strong>If-then-else</strong>: <code>(if condition then else)</code> evaluates <code>condition</code>. If it's true, <code>then</code> is evaluated. If it's false, <code>else</code> is evaluated.</p>
+</div>
+</div>
+</div>
+
+</body>
+</html>
+
