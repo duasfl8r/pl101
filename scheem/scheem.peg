@@ -35,7 +35,7 @@ atom =
     chars:validchar+
         {
             var str = chars.join("");
-            var int = parseInt(str);
+            var int = parseFloat(str);
             
             return isNaN(int) ? str : int;
         }
