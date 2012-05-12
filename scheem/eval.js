@@ -1,71 +1,27 @@
 /*jslint sloppy: true, white: true, stupid: true, node: true, nomen: true*/
 
 var _;
+
+var environment;
+var push_scope, make_env_factory, update, lookup;
+
 if(typeof module !== 'undefined') {
     _ = require('underscore');
+
+    environment = require('./environment');
+    push_scope = environment.push_scope;
+    make_env_factory = environment.make_env_factory;
+    update = environment.update;
+    lookup = environment.lookup;
+    add_binding = environment.add_binding;
 }
+
+var make_env = make_env_factory({});
 
 var assert_true = function(condition, message) {
     if(!condition) {
         throw new Error(message);
     }
-};
-
-var push_scope = function(env) {
-    var env_ = {};
-    env_.bindings = {};
-    env_.outer = env;
-    return env_;
-};
-
-var make_env = function(bindings) {
-    if(typeof bindings === 'undefined') {
-        bindings = {};
-    }
-
-    return {
-        bindings: bindings,
-        outer: null
-    };
-};
-
-var update = function(env, key, value, on_innermost) {
-    on_innermost = (typeof on_innermost === 'undefined') ? false : on_innermost;
-
-    if(_.has(env.bindings, key) || env.outer === null || on_innermost) {
-        env.bindings[key] = value;
-    } else {
-        update(env.outer, key, value, false);
-    }
-}; 
-
-var add_binding = function(e, k, v) { update(e, k, v, true) };
-
-var lookup = function(env, v, on_innermost) {
-    var v_;
-
-    on_innermost = (typeof on_innermost === 'undefined') ? false : on_innermost;
-
-    try {
-        for(v_ in env.bindings) {
-            if(env.bindings.hasOwnProperty(v_)) {
-                if(v === v_) {
-                    return env.bindings[v_];
-                }
-            }
-        }
-    } catch(e) {
-        if(e.name === 'TypeError') {
-            return undefined;
-        }
-        throw e;
-    }
-
-    if(on_innermost) {
-        return undefined;
-    }
-
-    return lookup(env.outer, v, false);
 };
 
 var map_eval = function(exprs, env) {
@@ -91,7 +47,6 @@ var evalScheem = function (expr, env) {
             evalued_args = map_eval(args, env);
             assert_true(_.all(evalued_args, _.isNumber), "Arguments of '+' must all be numbers");
             return _.reduce(evalued_args, function(a, b) { return a + b; }, 0);
-
         case '-':
             evalued_args = map_eval(args, env);
             assert_true(_.all(evalued_args, _.isNumber), "Arguments of '-' must all be numbers");
@@ -112,7 +67,7 @@ var evalScheem = function (expr, env) {
         case 'define':
             assert_true(typeof lookup(env, expr[1], true) === 'undefined', "Variable is already defined");
             assert_true(expr.length === 3, "'define' takes exactly 2 arguments, got " + String(expr.length - 1));
-            update(env, expr[1], evalScheem(expr[2], env));
+            add_binding(env, expr[1], evalScheem(expr[2], env));
             return 0;
 
        case 'set!':
@@ -193,7 +148,7 @@ var evalScheem = function (expr, env) {
 
            assert_true(_.isString(expr[1]), "First argument to 'let-one' must be a atom");
            env_ = push_scope(env);
-           update(env_, expr[1], evalScheem(expr[2], env_), true);
+           add_binding(env_, expr[1], evalScheem(expr[2], env_));
            return evalScheem(expr[3], env_);
 
        case 'lambda-one':
@@ -201,7 +156,7 @@ var evalScheem = function (expr, env) {
 
            return function(lambda_arg_value) {
                env_ = push_scope(env);
-               update(env_, lambda_arg, lambda_arg_value, true);
+               add_binding(env_, lambda_arg, lambda_arg_value);
                return evalScheem(expr[2], env_);
            };
 
@@ -221,7 +176,7 @@ var evalScheem = function (expr, env) {
 
                env_ = push_scope(env);
                for(i=0; i<arguments.length; i+=1) {
-                   update(env_, lambda_args[i], arguments[i], true);
+                   add_binding(env_, lambda_args[i], arguments[i]);
                }
                return evalScheem(args[1], env_);
            };

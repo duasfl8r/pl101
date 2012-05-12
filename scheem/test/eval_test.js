@@ -1,21 +1,30 @@
 /*jslint sloppy: true, white: true, stupid: true, node: true */
 /*global suite, test, chai */ 
 
-var assert, expect, scheem, evalScheem, lookup, make_env, update;
+var assert, expect;
+
+var evalScheem;
+
+var environment;
+var lookup, make_env_factory, update;
+
 if(typeof module !== 'undefined') {
     assert = require('chai').assert;
     expect = require('chai').expect;
     evalScheem = require('../eval').evalScheem;
-    lookup = require('../eval').lookup;
-    make_env = require('../eval').make_env;
-    update = require('../eval').update;
-    add_binding = require('../eval').add_binding;
-    push_scope = require('../eval').push_scope;
-    util = require('util');
+
+    environment = require('../environment');
+    push_scope = environment.push_scope;
+    make_env_factory = environment.make_env_factory;
+    update = environment.update;
+    lookup = environment.lookup;
+    add_binding = environment.add_binding;
 } else {
     assert = chai.assert;
     expect = chai.expect;
 }
+
+var make_env = make_env_factory({});
 
 suite('arithmetics', function() {
     test('addition', function() {
