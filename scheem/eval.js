@@ -5,10 +5,6 @@ if(typeof module !== 'undefined') {
     _ = require('underscore');
 }
 
-var clone = function(obj) {
-    return JSON.parse(JSON.stringify(obj));
-};
-
 var assert_true = function(condition, message) {
     if(!condition) {
         throw new Error(message);
@@ -16,8 +12,10 @@ var assert_true = function(condition, message) {
 };
 
 var push_scope = function(env) {
-    env.outer = clone(env);
-    env.bindings = {};
+    var env_ = {};
+    env_.bindings = {};
+    env_.outer = env;
+    return env_;
 };
 
 var make_env = function(bindings) {
@@ -193,16 +191,16 @@ var evalScheem = function (expr, env) {
        case 'let-one':
            assert_true(expr.length === 4, "'let-one' takes exactly 3 arguments, got " + String(expr.length - 1));
 
-           env_ = clone(env);
-           push_scope(env_);
-           update(env_, expr[1], evalScheem(expr[2], env_));
+           assert_true(_.isString(expr[1]), "First argument to 'let-one' must be a atom");
+           env_ = push_scope(env);
+           update(env_, expr[1], evalScheem(expr[2], env_), true);
            return evalScheem(expr[3], env_);
+
        case 'lambda-one':
            lambda_arg = expr[1];
 
            return function(lambda_arg_value) {
-               env_ = clone(env);
-               push_scope(env_);
+               env_ = push_scope(env);
                update(env_, lambda_arg, lambda_arg_value, true);
                return evalScheem(expr[2], env_);
            };
@@ -220,4 +218,5 @@ if(typeof module !== 'undefined') {
     exports.make_env = make_env;
     exports.update = update;
     exports.add_binding = add_binding;
+    exports.push_scope = push_scope;
 }
