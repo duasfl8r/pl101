@@ -73,7 +73,7 @@ var map_eval = function(exprs, env) {
 };
 
 var evalScheem = function (expr, env) {
-    var result, i, evalued_args, func, args, list, elem, arg, rest, previous, env_, fn, lambda_arg;
+    var result, i, evalued_args, func, args, list, elem, arg, rest, previous, env_, fn, lambda_arg, lambda_args;
 
     if (typeof expr === 'number') {
         return expr;
