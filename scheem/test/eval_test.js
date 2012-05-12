@@ -10,6 +10,8 @@ if(typeof module !== 'undefined') {
     make_env = require('../eval').make_env;
     update = require('../eval').update;
     add_binding = require('../eval').add_binding;
+    push_scope = require('../eval').push_scope;
+    util = require('util');
 } else {
     assert = chai.assert;
     expect = chai.expect;
@@ -371,7 +373,13 @@ suite('let-one', function() {
     });
 
     test('shadowing', function() {
-        expr = ["let-one","x",2,["+",["let-one","x",3,"x"],["let-one","y",4,"x"]]];
+        expr = [
+            "let-one", "x", 2, [
+                    "+",
+                    ["let-one", "x", 3, "x"],
+                    ["let-one", "y", 4, "x"]
+                ]
+        ];
         assert.equal(5, evalScheem(expr, make_env()));
     });
 });
@@ -379,12 +387,15 @@ suite('let-one', function() {
 suite('update', function() {
     var env1 = { bindings: {'x': 19}, outer: { } };
     var env1u = { bindings: {'x': 20}, outer: { } };
+
     var env2 = { bindings: {'y': 16}, outer:
         { bindings: {'x': 19}, outer: { } }};
     var env2u = { bindings: {'y': 10}, outer:
         { bindings: {'x': 19}, outer: { } }};
+
     var env2v = { bindings: {'y': 10}, outer:
         { bindings: {'x': 20}, outer: { } }};
+
     var env3 = { bindings: {'x': 2}, outer: 
         { bindings: {'y': 16}, outer: 
             { bindings: {'x': 19}, outer: { } }}};
@@ -481,5 +492,23 @@ suite('add binding', function() {
     test('New binding', function() {
         add_binding(env2, 'z', 9);
         assert.deepEqual(env2, env2u);
+    });
+});
+
+suite('multiple arguments function', function() {
+    test('no arguments function', function() {
+        var env = make_env({ 'the_answer': function() { return 42; } });
+        assert.equal(evalScheem(['the_answer'], env), 42);
+    });
+
+    test('add_three', function() {
+        var env = make_env({ 'add_three': function(a, b, c) { return a + b + c; } });
+        assert.equal(evalScheem(['add_three', 4, 5, 6], env), 15);
+    });
+
+    test('outer scoped add_three', function() {
+        var env = make_env({ 'add_three': function(a, b, c) { return a + b + c; } });
+        var env_ = push_scope(env);
+        assert.equal(evalScheem(['add_three', 4, 5, 6], env_), 15);
     });
 });
