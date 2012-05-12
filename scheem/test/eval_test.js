@@ -512,3 +512,52 @@ suite('multiple arguments function', function() {
         assert.equal(evalScheem(['add_three', 4, 5, 6], env_), 15);
     });
 });
+
+suite('lambda', function() {
+    test('and just lambda', function() {
+        var env = make_env();
+        var expr = [ 'lambda', ['x', 'y'], ['+', 'x', 'y'] ];
+        expect(evalScheem(expr, env)).to.be.a('function');
+    });
+
+    test('anonymously applied', function() {
+        var env = make_env();
+        var expr = [[ 'lambda', ['x', 'y'], ['+', 'x', 'y'] ], 2, 3];
+        assert.equal(evalScheem(expr, env), 5)
+    });
+
+    test('defined', function() {
+        var env = make_env();
+        var expr_def = ['define', 'sum2', [ 'lambda', ['x', 'y'], ['+', 'x', 'y'] ]];
+        var expr_apply = ['sum2', 2, 3]
+        var expr = ['begin', expr_def, expr_apply]
+        assert.equal(evalScheem(expr, env), 5)
+    });
+
+    test('passed to another function', function() {
+        var env = make_env();
+        var expr_def_double = ['define', 'double', [ 'lambda', ['x'], ['+', 'x', 'x'] ]];
+        var expr_def_twice = ['define', 'twice', ['lambda', ['f', 'x'], ['f', ['f', 'x']]]];
+        var expr_4_times_4 = ['twice', 'double', 4]
+        var expr = ['begin', expr_def_double, expr_def_twice, expr_4_times_4]
+        assert.equal(evalScheem(expr, env), 16)
+    });
+
+    test('using values from enclosing function', function() {
+        var env = make_env({ 'three': 3 });
+        var expr = [['lambda', ['x'], ['+', 'x', 'three']], 4];
+        assert.equal(evalScheem(expr, env), 7);
+    });
+
+    test('modifying a global variable', function() {
+        var env = make_env();
+        var expr = ['begin',
+                        ['define', 'num', 3],
+                        [['lambda', ['x'],
+                            ['begin',
+                                ['set!', 'num', 4],
+                                ['+', 'x', 'num']]],
+                         4]];
+        assert.equal(evalScheem(expr, env), 8);
+    });
+});
