@@ -9,7 +9,7 @@ var clone = function(obj) {
     return JSON.parse(JSON.stringify(obj));
 };
 
-var check = function(condition, message) {
+var assert_true = function(condition, message) {
     if(!condition) {
         throw new Error(message);
     }
@@ -18,11 +18,6 @@ var check = function(condition, message) {
 var push_scope = function(env) {
     env.outer = clone(env);
     env.bindings = {};
-};
-
-var pop_scope = function(env) {
-    env.bindings = env.outer.bindings;
-    env.outer = env.outer.outer;
 };
 
 var make_env = function(bindings) {
@@ -36,10 +31,10 @@ var make_env = function(bindings) {
     };
 };
 
-var update = function(env, key, value, change_innermost) {
-    change_innermost = (typeof change_innermost === 'undefined') ? false : change_innermost;
+var update = function(env, key, value, on_innermost) {
+    on_innermost = (typeof on_innermost === 'undefined') ? false : on_innermost;
 
-    if(_.has(env.bindings, key) || env.outer === null || change_innermost) {
+    if(_.has(env.bindings, key) || env.outer === null || on_innermost) {
         env.bindings[key] = value;
     } else {
         update(env.outer, key, value, false);
@@ -48,8 +43,11 @@ var update = function(env, key, value, change_innermost) {
 
 var add_binding = function(e, k, v) { update(e, k, v, true) };
 
-var lookup = function(env, v) {
+var lookup = function(env, v, on_innermost) {
     var v_;
+
+    on_innermost = (typeof on_innermost === 'undefined') ? false : on_innermost;
+
     try {
         for(v_ in env.bindings) {
             if(env.bindings.hasOwnProperty(v_)) {
@@ -65,11 +63,19 @@ var lookup = function(env, v) {
         throw e;
     }
 
-    return lookup(env.outer, v);
+    if(on_innermost) {
+        return undefined;
+    }
+
+    return lookup(env.outer, v, false);
+};
+
+var map_eval = function(exprs, env) {
+    return _.map(exprs, function(e) { return evalScheem(e, env); });
 };
 
 var evalScheem = function (expr, env) {
-    var result, i, args, head, tail, list, elem, arg, rest, previous, env_, fn, lambda_arg;
+    var result, i, evalued_args, func, args, list, elem, arg, rest, previous, env_, fn, lambda_arg;
 
     if (typeof expr === 'number') {
         return expr;
@@ -79,41 +85,41 @@ var evalScheem = function (expr, env) {
         return lookup(env, expr);
     }
 
-    head = expr[0];
-    tail = expr.slice(1);
+    func = expr[0];
+    args = expr.slice(1);
 
-    switch (head) {
+    switch (func) {
         case '+':
-            args = _.map(tail, function(a) { return evalScheem(a, env); });
-            check(_.all(args, _.isNumber), "Arguments of '+' must all be numbers");
-            return _.reduce(args, function(a, b) { return a + b; }, 0);
+            evalued_args = map_eval(args, env);
+            assert_true(_.all(evalued_args, _.isNumber), "Arguments of '+' must all be numbers");
+            return _.reduce(evalued_args, function(a, b) { return a + b; }, 0);
 
         case '-':
-            args = _.map(tail, function(a) { return evalScheem(a, env); });
-            check(_.all(args, _.isNumber), "Arguments of '-' must all be numbers");
-            check(args.length > 0, "Don't call '-' without arguments!");
-            return _.reduce(args.slice(1), function(a, b) { return a - b; }, args[0]);
+            evalued_args = map_eval(args, env);
+            assert_true(_.all(evalued_args, _.isNumber), "Arguments of '-' must all be numbers");
+            assert_true(evalued_args.length > 0, "Don't call '-' without arguments!");
+            return _.reduce(evalued_args.slice(1), function(a, b) { return a - b; }, evalued_args[0]);
 
         case '*':
-            args = _.map(tail, function(a) { return evalScheem(a, env); });
-            check(_.all(args, _.isNumber), "Arguments of '*' must all be numbers");
-            return _.reduce(args, function(a, b) { return a * b; }, 1);
+            evalued_args = map_eval(args, env);
+            assert_true(_.all(evalued_args, _.isNumber), "Arguments of '*' must all be numbers");
+            return _.reduce(evalued_args, function(a, b) { return a * b; }, 1);
 
         case '/':
-            args = _.map(tail, function(a) { return evalScheem(a, env); });
-            check(_.all(args, _.isNumber), "Arguments of '/' must all be numbers");
-            check(args.length > 0, "Don't call '/' without arguments!");
-            return _.reduce(args.slice(1), function(a, b) { return a / b; }, args[0]);
+            evalued_args = map_eval(args, env);
+            assert_true(_.all(evalued_args, _.isNumber), "Arguments of '/' must all be numbers");
+            assert_true(evalued_args.length > 0, "Don't call '/' without arguments!");
+            return _.reduce(evalued_args.slice(1), function(a, b) { return a / b; }, evalued_args[0]);
 
         case 'define':
-            check(typeof lookup(env, expr[1]) === 'undefined', "Variable is already defined");
-            check(expr.length === 3, "'define' takes exactly 2 arguments, got " + String(expr.length - 1));
+            assert_true(typeof lookup(env, expr[1], true) === 'undefined', "Variable is already defined");
+            assert_true(expr.length === 3, "'define' takes exactly 2 arguments, got " + String(expr.length - 1));
             update(env, expr[1], evalScheem(expr[2], env));
             return 0;
 
        case 'set!':
-            check(typeof lookup(env, expr[1]) !== 'undefined', "Variable is not defined");
-            check(expr.length === 3, "'set!' takes exactly 2 arguments, got " + String(expr.length - 1));
+            assert_true(typeof lookup(env, expr[1]) !== 'undefined', "Variable is not defined");
+            assert_true(expr.length === 3, "'set!' takes exactly 2 arguments, got " + String(expr.length - 1));
             update(env, expr[1], evalScheem(expr[2], env));
             return 0;
 
@@ -125,19 +131,20 @@ var evalScheem = function (expr, env) {
            return result;
 
        case 'quote':
-           check(expr.length === 2, "'quote' takes exactly 1 arguments, got " + String(expr.length - 1));
+           assert_true(expr.length === 2, "'quote' takes exactly 1 arguments, got " + String(expr.length - 1));
            return expr[1];
 
        case '=':
-           args = _.map(tail, function(a) { return evalScheem(a, env); });
-           check(_.all(args, _.isNumber), "Arguments of '=' must all be numbers");
-           if(args.length === 0) {
+           evalued_args = map_eval(args, env);
+           assert_true(_.all(evalued_args, _.isNumber), "Arguments of '=' must all be numbers");
+
+           if(evalued_args.length === 0) {
                return '#t';
            }
 
-           arg = args[0];
-           for(i=1; i<args.length; i+=1) {
-               if(arg !== args[i]) {
+           arg = evalued_args[0];
+           for(i=1; i<evalued_args.length; i+=1) {
+               if(arg !== evalued_args[i]) {
                    return '#f';
                }
            }
@@ -146,45 +153,45 @@ var evalScheem = function (expr, env) {
 
 
        case '<':
-           args = _.map(tail, function(a) { return evalScheem(a, env); });
-           check(_.all(args, _.isNumber), "Arguments of '<' must all be numbers");
+           evalued_args = map_eval(args, env);
+           assert_true(_.all(evalued_args, _.isNumber), "Arguments of '<' must all be numbers");
            previous = -Infinity;
-           for(i=0; i<args.length; i+=1) {
-               if(previous > args[i]) {
+           for(i=0; i<evalued_args.length; i+=1) {
+               if(previous >= evalued_args[i]) {
                    return '#f';
                }
-               previous = args[i];
+               previous = evalued_args[i];
            }
            return '#t';
 
        case 'cons':
-           args = _.map(tail, function(a) { return evalScheem(a, env); });
-           check(_.isArray(args[1]), "The second argument to 'cons' must be a list");
-           check(args.length === 2, "'cons' takes exactly 2 arguments, got " + String(args.length));
-           return [args[0]].concat(args[1]);
+           evalued_args = map_eval(args, env);
+           assert_true(_.isArray(evalued_args[1]), "The second argument to 'cons' must be a list");
+           assert_true(evalued_args.length === 2, "'cons' takes exactly 2 arguments, got " + String(evalued_args.length));
+           return [evalued_args[0]].concat(evalued_args[1]);
 
        case 'car':
-           check(expr.length === 2, "'car' takes exactly 1 arguments, got " + String(expr.length - 1));
-           check(_.isArray(expr[1]), "The argument to 'car' must be a non-empty list");
+           assert_true(expr.length === 2, "'car' takes exactly 1 arguments, got " + String(expr.length - 1));
+           assert_true(_.isArray(expr[1]), "The argument to 'car' must be a non-empty list");
            list = evalScheem(expr[1], env);
-           check(list.length > 0, "The argument to 'car' must be a non-empty list");
-           return list.length > 0 ? list[0] : undefined;
+           assert_true(list.length > 0, "The argument to 'car' must be a non-empty list");
+           return list[0];
 
        case 'cdr':
-           check(expr.length === 2, "'cdr' takes exactly 1 arguments, got " + String(expr.length - 1));
-           check(_.isArray(expr[1]), "The argument to 'cdr' must be a non-empty list");
+           assert_true(expr.length === 2, "'cdr' takes exactly 1 arguments, got " + String(expr.length - 1));
+           assert_true(_.isArray(expr[1]), "The argument to 'cdr' must be a non-empty list");
            list = evalScheem(expr[1], env);
-           check(list.length > 0, "The argument to 'cdr' must be a non-empty list");
+           assert_true(list.length > 0, "The argument to 'cdr' must be a non-empty list");
            return list.slice(1);
 
        case 'if':
-           check(expr.length === 4, "'if' takes exactly 3 arguments, got " + String(expr.length - 1));
+           assert_true(expr.length === 4, "'if' takes exactly 3 arguments, got " + String(expr.length - 1));
            if(evalScheem(expr[1], env) === '#f') {
                return evalScheem(expr[3], env);
            }
            return evalScheem(expr[2], env);
        case 'let-one':
-           check(expr.length === 4, "'let-one' takes exactly 3 arguments, got " + String(expr.length - 1));
+           assert_true(expr.length === 4, "'let-one' takes exactly 3 arguments, got " + String(expr.length - 1));
 
            env_ = clone(env);
            push_scope(env_);
