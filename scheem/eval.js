@@ -205,10 +205,32 @@ var evalScheem = function (expr, env) {
                return evalScheem(expr[2], env_);
            };
 
+       case 'lambda':
+           assert_true(_.isArray(args[0]), "First argument to 'lambda' must be list of atoms");
+           assert_true(
+               _.filter(function(a) { !_.isString(a); }, args, args).length === 0,
+               "First argument to 'lambda' must be list of atoms"
+           )
+           lambda_args = args[0];
+
+           return function() {
+               if(arguments.length !== lambda_args.length) {
+                    throw new Error("'" + func + "' takes exactly " + lambda_args.length +
+                                    " arguments, got " + arguments.length);
+               }
+
+               env_ = push_scope(env);
+               for(i=0; i<arguments.length; i+=1) {
+                   update(env_, lambda_args[i], arguments[i], true);
+               }
+               return evalScheem(args[1], env_);
+           };
+
        default:
-           fn = evalScheem(expr[0], env);
-           arg = evalScheem(expr[1], env);
-           return fn(arg);
+           fn = evalScheem(func, env);
+           args = map_eval(args, env);
+
+           return fn.apply(null, args);
     }
 };
 
