@@ -5,23 +5,78 @@ if(typeof module !== 'undefined') {
     _ = require('underscore');
 }
 
+var clone = function(obj) {
+    return JSON.parse(JSON.stringify(obj));
+};
+
 var check = function(condition, message) {
     if(!condition) {
         throw new Error(message);
     }
 };
 
-var evalScheem = function (expr, env) {
-    var result, i, args, head, tail, list, elem, arg, rest, previous;
+var push_scope = function(env) {
+    env.outer = clone(env);
+    env.bindings = {};
+};
 
-    // Numbers evaluate to themselves
+var pop_scope = function(env) {
+    env.bindings = env.outer.bindings;
+    env.outer = env.outer.outer;
+};
+
+var make_env = function(bindings) {
+    if(typeof bindings === 'undefined') {
+        bindings = {};
+    }
+
+    return {
+        bindings: bindings,
+        outer: null
+    };
+};
+
+var update = function(env, key, value, change_innermost) {
+    change_innermost = (typeof change_innermost === 'undefined') ? false : change_innermost;
+
+    if(_.has(env.bindings, key) || env.outer === null || change_innermost) {
+        env.bindings[key] = value;
+    } else {
+        update(env.outer, key, value, false);
+    }
+}; 
+
+var add_binding = function(e, k, v) { update(e, k, v, true) };
+
+var lookup = function(env, v) {
+    var v_;
+    try {
+        for(v_ in env.bindings) {
+            if(env.bindings.hasOwnProperty(v_)) {
+                if(v === v_) {
+                    return env.bindings[v_];
+                }
+            }
+        }
+    } catch(e) {
+        if(e.name === 'TypeError') {
+            return undefined;
+        }
+        throw e;
+    }
+
+    return lookup(env.outer, v);
+};
+
+var evalScheem = function (expr, env) {
+    var result, i, args, head, tail, list, elem, arg, rest, previous, env_, fn, lambda_arg;
+
     if (typeof expr === 'number') {
         return expr;
     }
 
-    // Strings are variable references
     if (typeof expr === 'string') {
-        return env[expr];
+        return lookup(env, expr);
     }
 
     head = expr[0];
@@ -51,15 +106,15 @@ var evalScheem = function (expr, env) {
             return _.reduce(args.slice(1), function(a, b) { return a / b; }, args[0]);
 
         case 'define':
-            check(typeof env[expr[1]] === 'undefined', "Variable is already defined");
+            check(typeof lookup(env, expr[1]) === 'undefined', "Variable is already defined");
             check(expr.length === 3, "'define' takes exactly 2 arguments, got " + String(expr.length - 1));
-            env[expr[1]] = evalScheem(expr[2], env);
+            update(env, expr[1], evalScheem(expr[2], env));
             return 0;
 
        case 'set!':
-            check(typeof env[expr[1]] !== 'undefined', "Variable is not defined");
+            check(typeof lookup(env, expr[1]) !== 'undefined', "Variable is not defined");
             check(expr.length === 3, "'set!' takes exactly 2 arguments, got " + String(expr.length - 1));
-            env[expr[1]] = evalScheem(expr[2], env);
+            update(env, expr[1], evalScheem(expr[2], env));
             return 0;
 
        case 'begin':
@@ -123,14 +178,39 @@ var evalScheem = function (expr, env) {
            return list.slice(1);
 
        case 'if':
-           check(expr.length === 4, "'cdr' takes exactly 3 arguments, got " + String(expr.length - 1));
+           check(expr.length === 4, "'if' takes exactly 3 arguments, got " + String(expr.length - 1));
            if(evalScheem(expr[1], env) === '#f') {
                return evalScheem(expr[3], env);
            }
            return evalScheem(expr[2], env);
+       case 'let-one':
+           check(expr.length === 4, "'let-one' takes exactly 3 arguments, got " + String(expr.length - 1));
+
+           env_ = clone(env);
+           push_scope(env_);
+           update(env_, expr[1], evalScheem(expr[2], env_));
+           return evalScheem(expr[3], env_);
+       case 'lambda-one':
+           lambda_arg = expr[1];
+
+           return function(lambda_arg_value) {
+               env_ = clone(env);
+               push_scope(env_);
+               update(env_, lambda_arg, lambda_arg_value, true);
+               return evalScheem(expr[2], env_);
+           };
+
+       default:
+           fn = evalScheem(expr[0], env);
+           arg = evalScheem(expr[1], env);
+           return fn(arg);
     }
 };
 
 if(typeof module !== 'undefined') {
     exports.evalScheem = evalScheem;
+    exports.lookup = lookup;
+    exports.make_env = make_env;
+    exports.update = update;
+    exports.add_binding = add_binding;
 }

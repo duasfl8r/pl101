@@ -15,7 +15,7 @@ suite('sum', function() {
     });
 
     test('of two variables', function() {
-        assert.equal(evalScheemString('(+ x y)', { x: 3, y: 4 }), 7);
+        assert.equal(evalScheemString('(+ x y)', { bindings: { x: 3, y: 4 } }), 7);
     });
 
     test('of two expressions', function() {
