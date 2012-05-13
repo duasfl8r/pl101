@@ -55,6 +55,13 @@ must be a list). `(car list)` returns the first element of `list`, while
 **If-then-else**: `(if condition then else)` evaluates `condition`. If it's
 true, `then` is evaluated. If it's false, `else` is evaluated.
 
+**Temporary binding**: inside a `let` block, you can create bindings that
+will work only inside its body: `(let ((x 3) (y 4)) (+ x y)` should return
+`7`
+
+**Functions**: `(define double (lambda (x) (* 2 x)))` defines a function
+that doubles its argument `x`.
+
 ## Testing
 
 To start unit tests, run `fab test`. This will run all Mocha tests

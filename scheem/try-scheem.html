@@ -68,6 +68,7 @@
         (+ x y))</pre>
     <p>A comment starts with <code>;;</code> and goes until the end of the line.</p>
     <h3 id="supported-features">Supported features</h3>
+    <div>
     <p><strong>Literals</strong>: number (<code>192</code>, <code>1</code>, -<code>10</code>, <code>1000.4</code>); boolean (<code>#f</code> is false, anything else -- including <code>#t</code> -- is true).</p>
     <p><strong>Arithmetics</strong>: <code>(+ 1 2 3 4)</code>, <code>(- 15 5)</code>, <code>(* 2 5)</code>, <code>(/ 40 2 2)</code> all give the same <strong>result</strong>: <code>10</code>.</p>
     <p><strong>Variables</strong>: <code>(define x 10)</code> defines <code>x</code> as <code>10</code> for the first time; <code>(set! x 15)</code> sets <code>x</code> to <code>15</code> after it was defined.</p>
@@ -76,6 +77,9 @@
     <p><strong>Comparisons</strong>: Scheem currently supports <code>&lt;</code> and <code>=</code> as comparisons between numbers.</p>
     <p><strong>Lists</strong>: <code>(cons head tail)</code> puts <code>head</code> in the beginning of <code>tail</code> (which must be a list). <code>(car list)</code> returns the first element of <code>list</code>, while <code>(cdr list)</code> returns <em>all but</em> the first element of <code>list</code>.</p>
     <p><strong>If-then-else</strong>: <code>(if condition then else)</code> evaluates <code>condition</code>. If it's true, <code>then</code> is evaluated. If it's false, <code>else</code> is evaluated.</p>
+<p><strong>Temporary binding</strong>: inside a <code>let</code> block, you can create bindings that will work only inside its body: <code>(let ((x 3) (y 4)) (+ x y)</code> should return 7</p>
+<p><strong>Functions</strong>: <code>(define double (lambda (x) (* 2 x)))</code> defines a function that doubles its argument <code>x</code>.</p>
+</div>
 </div>
 </div>
 </div>
