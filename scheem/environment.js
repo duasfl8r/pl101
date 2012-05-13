@@ -54,7 +54,10 @@ var lookup = function(env, v, on_innermost) {
         }
     } catch(e) {
         if(e.name === 'TypeError') {
-            return undefined;
+            throw {
+                name: "LookupError",
+                message: "'" + v + "' has not been defined"
+            };
         }
         throw e;
     }

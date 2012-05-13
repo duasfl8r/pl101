@@ -24,7 +24,10 @@ if(typeof module !== 'undefined') {
 
 assert_true = function(condition, message) {
     if(!condition) {
-        throw new Error(message);
+        throw {
+            name: "ArgumentError",
+            message: message
+        };
     }
 };
 
@@ -42,11 +45,11 @@ sbool = function(a) {
 evalScheem = function (expr, env) {
     var result, i, evalued_args, list, elem, arg, rest, previous, env_, fn, lambda_arg, lambda_args;
 
-    if (typeof expr === 'number') {
+    if(typeof expr === 'number') {
         return expr;
     }
 
-    if (typeof expr === 'string') {
+    if(typeof expr === 'string') {
         return lookup(env, expr);
     }
 
@@ -121,8 +124,11 @@ evalScheem = function (expr, env) {
 
                return function() {
                    if(arguments.length !== lambda_args.length) {
-                        throw new Error("'" + func + "' takes exactly " + lambda_args.length +
-                                        " arguments, got " + arguments.length);
+                        throw {
+                            name: "ArgumentError",
+                            message: "'" + func + "' takes exactly " + lambda_args.length +
+                                        " arguments, got " + arguments.length,
+                        };
                    }
 
                    env_ = push_scope(env);
@@ -137,16 +143,17 @@ evalScheem = function (expr, env) {
                args = map_eval(args, env);
 
                if(typeof fn !== 'function') {
-                   throw new Error("Function '" + func  + "' has not been defined");
+                   throw {
+                        name: "ArgumentError",
+                        message: "Function '" + func  + "' has not been defined"
+                   };
                }
 
                return fn.apply(null, args);
         }
     } catch(e) {
-        console.error("ERROR: ", e);
-        console.error("EXPRESSION: ", expr);
-        console.error("ENVIRONMENT: ", env);
-        process.exit(-1);
+        e.expr = expr;
+        throw e;
     };
 };
 

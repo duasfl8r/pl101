@@ -6,6 +6,7 @@ var evalScheem = require('./eval').evalScheem;
 var make_env = require('./eval').make_env;
 var fs = require('fs');
 var util = require('util');
+var _ = require('underscore');
 var program;
 var env, tree, result;
 
@@ -26,8 +27,13 @@ try {
         console.log(tree);
     } else {
         result = evalScheem(tree, env);
-        console.log(result);
+        if(typeof result !== 'undefined') {
+            console.log(result);
+        }
     }
 } catch(err) {
-    console.error("ERROR:", err);
+    console.error("ERROR:", err.message);
+    if(_.has(err, 'expr')) {
+        console.error("EXPRESSION: ", err.expr);
+    }
 }
