@@ -3,7 +3,7 @@
 
 var assert, expect;
 
-var evalScheem;
+var evalScheem, initial_bindings;
 
 var environment;
 var lookup, make_env_factory, update;
@@ -11,7 +11,9 @@ var lookup, make_env_factory, update;
 if(typeof module !== 'undefined') {
     assert = require('chai').assert;
     expect = require('chai').expect;
+
     evalScheem = require('../eval').evalScheem;
+    initial_bindings = require('../eval').initial_bindings;
 
     environment = require('../environment');
     push_scope = environment.push_scope;
@@ -24,7 +26,7 @@ if(typeof module !== 'undefined') {
     expect = chai.expect;
 }
 
-var make_env = make_env_factory({});
+var make_env = make_env_factory(initial_bindings);
 
 suite('arithmetics', function() {
     test('addition', function() {
@@ -186,14 +188,14 @@ suite('equal', function() {
 suite('different', function() {
     test('two numbers', function() {
         assert.equal(
-            evalScheem(['=', 3, 4], { bindings: make_env() }),
+            evalScheem(['=', 3, 4], make_env()),
             '#f'
         );
     });
 
     test('three numbers', function() {
         assert.equal(
-            evalScheem(['=', 3, 3, 4], { bindings: make_env() }),
+            evalScheem(['=', 3, 3, 4], make_env()),
             '#f'
         );
     });
@@ -354,7 +356,7 @@ suite('if', function() {
 });
 
 suite('lookup', function() {
-    var env1 = { bindings: {'x': 19}, outer: { } };
+    var env1 = { bindings: {'x': 19}, outer: make_env() };
     var env2 = { bindings: {'y': 16}, outer: env1 };
     var env3 = { bindings: {'x': 2}, outer: env2 };
 
@@ -394,23 +396,23 @@ suite('let-one', function() {
 });
 
 suite('update', function() {
-    var env1 = { bindings: {'x': 19}, outer: { } };
-    var env1u = { bindings: {'x': 20}, outer: { } };
+    var env1 = { bindings: {'x': 19}, outer: make_env() };
+    var env1u = { bindings: {'x': 20}, outer: make_env() };
 
     var env2 = { bindings: {'y': 16}, outer:
-        { bindings: {'x': 19}, outer: { } }};
+        { bindings: {'x': 19}, outer: make_env() }};
     var env2u = { bindings: {'y': 10}, outer:
-        { bindings: {'x': 19}, outer: { } }};
+        { bindings: {'x': 19}, outer: make_env() }};
 
     var env2v = { bindings: {'y': 10}, outer:
-        { bindings: {'x': 20}, outer: { } }};
+        { bindings: {'x': 20}, outer: make_env() }};
 
     var env3 = { bindings: {'x': 2}, outer: 
         { bindings: {'y': 16}, outer: 
-            { bindings: {'x': 19}, outer: { } }}};
+            { bindings: {'x': 19}, outer: make_env() }}};
     var env3u = { bindings: {'x': 9}, outer:
         { bindings: {'y': 16}, outer: 
-            { bindings: {'x': 19}, outer: { } }}};
+            { bindings: {'x': 19}, outer: make_env() }}};
 
     test('Single binding', function() {
         update(env1, 'x', 20);
@@ -434,14 +436,11 @@ suite('one argument function', function() {
     var always3 = function (x) { return 3; };
     var identity = function (x) { return x; };
     var plusone = function (x) { return x + 1; };
-    var env = {
-        bindings: {
+    var env = make_env({
             'always3': always3,
             'identity': identity,
             'plusone': plusone
-        },
-        outer: {}
-    };
+        });
 
 
     test('(always3 5)', function() {
@@ -469,29 +468,29 @@ suite('one argument function', function() {
 
 suite('lambda-one', function() {
     test('((lambda-one x x) 5)', function() {
-        assert.deepEqual(evalScheem([['lambda-one', 'x', 'x'], 5], { }), 5);
+        assert.deepEqual(evalScheem([['lambda-one', 'x', 'x'], 5], make_env()), 5);
     });
     test('((lambda-one x (+ x 1)) 5)', function() {
-        assert.deepEqual(evalScheem([['lambda-one', 'x', ['+', 'x', 1]], 5], { }), 6);
+        assert.deepEqual(evalScheem([['lambda-one', 'x', ['+', 'x', 1]], 5], make_env()), 6);
     });
 
     test('(((lambda-one x (lambda-one y (+ x y))) 5) 3)', function() {
-        assert.deepEqual(evalScheem([[['lambda-one', 'x', ['lambda-one', 'y', ['+', 'x', 'y']]], 5], 3], { }), 8);
+        assert.deepEqual(evalScheem([[['lambda-one', 'x', ['lambda-one', 'y', ['+', 'x', 'y']]], 5], 3], make_env()), 8);
     });
 
     test('(((lambda-one x (lambda-one x (+ x x))) 5) 3)', function() {
-        assert.deepEqual(evalScheem([[['lambda-one', 'x', ['lambda-one', 'x', ['+', 'x', 'x']]], 5], 3], { }), 6);
+        assert.deepEqual(evalScheem([[['lambda-one', 'x', ['lambda-one', 'x', ['+', 'x', 'x']]], 5], 3], make_env()), 6);
     });
 });
 
 suite('add binding', function() {
-    var env1 = { bindings: {'x': 19}, outer: { } };
-    var env1u = { bindings: {'x': 19, 'y': 3}, outer: { } };
+    var env1 = { bindings: {'x': 19}, outer: make_env() };
+    var env1u = { bindings: {'x': 19, 'y': 3}, outer: make_env() };
 
     var env2 = { bindings: {'y': 16}, outer:
-            { bindings: {'x': 19}, outer: { } }};
+            { bindings: {'x': 19}, outer: make_env() }};
     var env2u = { bindings: {'z': 9, 'y': 16}, outer:
-            { bindings: {'x': 19}, outer: { } }};
+            { bindings: {'x': 19}, outer: make_env() }};
 
     test('Simple new binding', function() {
         add_binding(env1, 'y', 3);
@@ -568,5 +567,24 @@ suite('lambda', function() {
                                 ['+', 'x', 'num']]],
                          4]];
         assert.equal(evalScheem(expr, env), 8);
+    });
+});
+
+suite('initial function', function() {
+    test('cadr', function() {
+        var env = make_env();
+        var expr = ['begin',
+                        ['define', 'cadr',
+                            ['lambda', ['l'], ['car', ['cdr', 'l']]]],
+                        ['cadr', ['quote', [1, 2, 3, 4]]]]
+        assert.equal(evalScheem(expr, env), 2);
+    });
+});
+
+suite('let', function() {
+    test('two variables', function() {
+        var env = make_env();
+        var expr = ['let', [['x', 5], ['y', 7]], ['+', 'x', 'y']];
+        assert.equal(evalScheem(expr, env), 12);
     });
 });
