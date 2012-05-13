@@ -41,7 +41,6 @@ SCHEEM = (function(){
         "comment": parse_comment,
         "commentNL": parse_commentNL,
         "expression": parse_expression,
-        "arg": parse_arg,
         "space": parse_space,
         "validchar": parse_validchar,
         "atom": parse_atom
@@ -248,7 +247,7 @@ SCHEEM = (function(){
       }
       
       function parse_expression() {
-        var result0, result1, result2, result3, result4, result5, result6, result7, result8;
+        var result0, result1, result2, result3, result4, result5, result6, result7;
         var pos0, pos1;
         
         pos0 = pos;
@@ -315,44 +314,38 @@ SCHEEM = (function(){
                 result3 = parse_space();
               }
               if (result2 !== null) {
-                result3 = parse_atom();
+                result3 = [];
+                result4 = parse_expression();
+                while (result4 !== null) {
+                  result3.push(result4);
+                  result4 = parse_expression();
+                }
                 if (result3 !== null) {
                   result4 = [];
-                  result5 = parse_arg();
+                  result5 = parse_space();
                   while (result5 !== null) {
                     result4.push(result5);
-                    result5 = parse_arg();
+                    result5 = parse_space();
                   }
                   if (result4 !== null) {
-                    result5 = [];
-                    result6 = parse_space();
-                    while (result6 !== null) {
-                      result5.push(result6);
-                      result6 = parse_space();
+                    if (input.charCodeAt(pos) === 41) {
+                      result5 = ")";
+                      pos++;
+                    } else {
+                      result5 = null;
+                      if (reportFailures === 0) {
+                        matchFailed("\")\"");
+                      }
                     }
                     if (result5 !== null) {
-                      if (input.charCodeAt(pos) === 41) {
-                        result6 = ")";
-                        pos++;
-                      } else {
-                        result6 = null;
-                        if (reportFailures === 0) {
-                          matchFailed("\")\"");
-                        }
+                      result6 = [];
+                      result7 = parse_space();
+                      while (result7 !== null) {
+                        result6.push(result7);
+                        result7 = parse_space();
                       }
                       if (result6 !== null) {
-                        result7 = [];
-                        result8 = parse_space();
-                        while (result8 !== null) {
-                          result7.push(result8);
-                          result8 = parse_space();
-                        }
-                        if (result7 !== null) {
-                          result0 = [result0, result1, result2, result3, result4, result5, result6, result7];
-                        } else {
-                          result0 = null;
-                          pos = pos1;
-                        }
+                        result0 = [result0, result1, result2, result3, result4, result5, result6];
                       } else {
                         result0 = null;
                         pos = pos1;
@@ -382,7 +375,7 @@ SCHEEM = (function(){
             pos = pos1;
           }
           if (result0 !== null) {
-            result0 = (function(offset, atom, args) { return [atom].concat(args); })(pos0, result0[3], result0[4]);
+            result0 = (function(offset, e) { return e; })(pos0, result0[3]);
           }
           if (result0 === null) {
             pos = pos0;
@@ -414,44 +407,38 @@ SCHEEM = (function(){
                   result3 = parse_space();
                 }
                 if (result2 !== null) {
-                  result3 = parse_atom();
+                  result3 = [];
+                  result4 = parse_expression();
+                  while (result4 !== null) {
+                    result3.push(result4);
+                    result4 = parse_expression();
+                  }
                   if (result3 !== null) {
                     result4 = [];
-                    result5 = parse_arg();
+                    result5 = parse_space();
                     while (result5 !== null) {
                       result4.push(result5);
-                      result5 = parse_arg();
+                      result5 = parse_space();
                     }
                     if (result4 !== null) {
-                      result5 = [];
-                      result6 = parse_space();
-                      while (result6 !== null) {
-                        result5.push(result6);
-                        result6 = parse_space();
+                      if (input.charCodeAt(pos) === 41) {
+                        result5 = ")";
+                        pos++;
+                      } else {
+                        result5 = null;
+                        if (reportFailures === 0) {
+                          matchFailed("\")\"");
+                        }
                       }
                       if (result5 !== null) {
-                        if (input.charCodeAt(pos) === 41) {
-                          result6 = ")";
-                          pos++;
-                        } else {
-                          result6 = null;
-                          if (reportFailures === 0) {
-                            matchFailed("\")\"");
-                          }
+                        result6 = [];
+                        result7 = parse_space();
+                        while (result7 !== null) {
+                          result6.push(result7);
+                          result7 = parse_space();
                         }
                         if (result6 !== null) {
-                          result7 = [];
-                          result8 = parse_space();
-                          while (result8 !== null) {
-                            result7.push(result8);
-                            result8 = parse_space();
-                          }
-                          if (result7 !== null) {
-                            result0 = [result0, result1, result2, result3, result4, result5, result6, result7];
-                          } else {
-                            result0 = null;
-                            pos = pos1;
-                          }
+                          result0 = [result0, result1, result2, result3, result4, result5, result6];
                         } else {
                           result0 = null;
                           pos = pos1;
@@ -481,45 +468,84 @@ SCHEEM = (function(){
               pos = pos1;
             }
             if (result0 !== null) {
-              result0 = (function(offset, atom, args) { return ["quote", [atom].concat(args)]; })(pos0, result0[3], result0[4]);
+              result0 = (function(offset, e) { return ["quote", e]; })(pos0, result0[3]);
             }
             if (result0 === null) {
               pos = pos0;
             }
+            if (result0 === null) {
+              pos0 = pos;
+              pos1 = pos;
+              result0 = [];
+              result1 = parse_space();
+              while (result1 !== null) {
+                result0.push(result1);
+                result1 = parse_space();
+              }
+              if (result0 !== null) {
+                if (input.substr(pos, 2) === "'(") {
+                  result1 = "'(";
+                  pos += 2;
+                } else {
+                  result1 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("\"'(\"");
+                  }
+                }
+                if (result1 !== null) {
+                  result2 = [];
+                  result3 = parse_space();
+                  while (result3 !== null) {
+                    result2.push(result3);
+                    result3 = parse_space();
+                  }
+                  if (result2 !== null) {
+                    if (input.charCodeAt(pos) === 41) {
+                      result3 = ")";
+                      pos++;
+                    } else {
+                      result3 = null;
+                      if (reportFailures === 0) {
+                        matchFailed("\")\"");
+                      }
+                    }
+                    if (result3 !== null) {
+                      result4 = [];
+                      result5 = parse_space();
+                      while (result5 !== null) {
+                        result4.push(result5);
+                        result5 = parse_space();
+                      }
+                      if (result4 !== null) {
+                        result0 = [result0, result1, result2, result3, result4];
+                      } else {
+                        result0 = null;
+                        pos = pos1;
+                      }
+                    } else {
+                      result0 = null;
+                      pos = pos1;
+                    }
+                  } else {
+                    result0 = null;
+                    pos = pos1;
+                  }
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+              if (result0 !== null) {
+                result0 = (function(offset) { return [] })(pos0);
+              }
+              if (result0 === null) {
+                pos = pos0;
+              }
+            }
           }
-        }
-        return result0;
-      }
-      
-      function parse_arg() {
-        var result0, result1;
-        var pos0, pos1;
-        
-        pos0 = pos;
-        pos1 = pos;
-        result0 = [];
-        result1 = parse_space();
-        while (result1 !== null) {
-          result0.push(result1);
-          result1 = parse_space();
-        }
-        if (result0 !== null) {
-          result1 = parse_expression();
-          if (result1 !== null) {
-            result0 = [result0, result1];
-          } else {
-            result0 = null;
-            pos = pos1;
-          }
-        } else {
-          result0 = null;
-          pos = pos1;
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, e) { return e; })(pos0, result0[1]);
-        }
-        if (result0 === null) {
-          pos = pos0;
         }
         return result0;
       }
@@ -542,13 +568,13 @@ SCHEEM = (function(){
       function parse_validchar() {
         var result0;
         
-        if (/^[0-9a-zA-Z_?!+-=@#$%^&*\/.]/.test(input.charAt(pos))) {
+        if (/^[0-9a-zA-Z_?!+-=@#$%^&*\/.><]/.test(input.charAt(pos))) {
           result0 = input.charAt(pos);
           pos++;
         } else {
           result0 = null;
           if (reportFailures === 0) {
-            matchFailed("[0-9a-zA-Z_?!+-=@#$%^&*\\/.]");
+            matchFailed("[0-9a-zA-Z_?!+-=@#$%^&*\\/.><]");
           }
         }
         return result0;

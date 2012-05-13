@@ -15,21 +15,19 @@ expression =
     space* atom:atom space*
         { return atom; }
 
-  / space* "(" space* atom:atom args:arg* space* ")" space*
-        { return [atom].concat(args); }
-
-  / space* "'(" space* atom:atom args:arg* space* ")" space*
-        { return ["quote", [atom].concat(args)]; }
-
-arg =
-    space* e:expression
+  / space* "(" space* e:expression* space* ")" space*
         { return e; }
+
+  / space* "'(" space* e:expression* space* ")" space*
+        { return ["quote", e]; }
+  / space* "'(" space* ")" space*
+  	{ return [] }
 
 space =
     [ \t\n]
 
 validchar =
-    [0-9a-zA-Z_?!+-=@#$%^&*/.]
+    [0-9a-zA-Z_?!+-=@#$%^&*/.><]
 
 atom =
     chars:validchar+
